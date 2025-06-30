@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Timpris-kalkylator</title>
+<style>
+  body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: #f9fafb;
+    margin: 0; padding: 2rem;
+    color: #222;
+    display: flex;
+    justify-content: center;
+  }
+  main {
+    background: white;
+    padding: 2rem;
+    border-radius: 10px;
+    box-shadow: 0 8px 20px rgb(0 0 0 / 0.1);
+    max-width: 600px;
+    width: 100%;
+  }
+  h1 {
+    text-align: center;
+    margin-bottom: 1.5rem;
+    color: #2c3e50;
+  }
+  .param-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-bottom: 2rem;
+  }
+  .param {
+    flex: 1 1 45%;
+    display: flex;
+    flex-direction: column;
+  }
+  label {
+    font-weight: 600;
+    margin-bottom: 0.3rem;
+    color: #34495e;
+  }
+  input[type=number] {
+    padding: 0.5rem;
+    font-size: 1rem;
+    border: 1.5px solid #ccc;
+    border-radius: 6px;
+    transition: border-color 0.3s;
+  }
+  input[type=number]:focus {
+    outline: none;
+    border-color: #3498db;
+  }
+  .results {
+    background: #ecf0f1;
+    border-radius: 8px;
+    padding: 1rem 1.5rem;
+    font-size: 1.1rem;
+    line-height: 1.5;
+  }
+  .results div {
+    margin-bottom: 0.7rem;
+  }
+  .label-result {
+    font-weight: 700;
+    color: #2c3e50;
+  }
+</style>
+</head>
+<body>
+<main>
+  <h1>Timpris-kalkylator</h1>
+  <section class="param-group">
+    <div class="param">
+      <label for="fasta-kostnader">Fasta kostnader (kr)</label>
+      <input type="number" id="fasta-kostnader" value="3000" min="0" step="100" />
+    </div>
+    <div class="param">
+      <label for="ovriga-kostnader">Övriga kostnader (kr)</label>
+      <input type="number" id="ovriga-kostnader" value="2000" min="0" step="100" />
+    </div>
+    <div class="param">
+      <label for="debiterbara-timmar">Debiterbara timmar</label>
+      <input type="number" id="debiterbara-timmar" value="140" min="1" step="1" />
+    </div>
+    <div class="param">
+      <label for="timpris">Timpris (kr)</label>
+      <input type="number" id="timpris" value="1000" min="0" step="10" />
+    </div>
+    <div class="param">
+      <label for="loneandel">Löneandel (0–1)</label>
+      <input type="number" id="loneandel" value="0.5" min="0" max="1" step="0.01" />
+    </div>
+    <div class="param">
+      <label for="arbetsgivaravgift">Arbetsgivaravgift (decimalform)</label>
+      <input type="number" id="arbetsgivaravgift" value="0.3142" min="0" max="1" step="0.0001" />
+    </div>
+    <div class="param">
+      <label for="tjanstepension">Tjänstepension (decimalform)</label>
+      <input type="number" id="tjanstepension" value="0.05" min="0" max="1" step="0.001" />
+    </div>
+    <div class="param">
+      <label for="semesterersattning">Semesterersättning (decimalform)</label>
+      <input type="number" id="semesterersattning" value="0.12" min="0" max="1" step="0.001" />
+    </div>
+    <div class="param">
+      <label for="moms">Moms (decimalform)</label>
+      <input type="number" id="moms" value="0.25" min="0" max="1" step="0.001" />
+    </div>
+    <div class="param">
+      <label for="skatt">Skatt (decimalform)</label>
+      <input type="number" id="skatt" value="0.3495" min="0" max="1" step="0.0001" />
+    </div>
+    <div class="param">
+      <label for="vinstskatt">Vinstskatt (decimalform)</label>
+      <input type="number" id="vinstskatt" value="0.206" min="0" max="1" step="0.0001" />
+    </div>
+  </section>
+  <section class="results" id="results">
+    <!-- Resultat visas här -->
+  </section>
+</main>
+
+<script>
+  function ceilNoDecimals(num) {
+    return Math.ceil(num);
+  }
+
+  function calculate() {
+    const FASTA_KOSTNADER = parseFloat(document.getElementById('fasta-kostnader').value) || 0;
+    const ÖVRIGA_KOSTNADER = parseFloat(document.getElementById('ovriga-kostnader').value) || 0;
+    const DEBITERBARA_TIMMAR = parseFloat(document.getElementById('debiterbara-timmar').value) || 1;
+    const TIMPRIS = parseFloat(document.getElementById('timpris').value) || 0;
+    const LÖNEANDEL = parseFloat(document.getElementById('loneandel').value) || 0;
+    const ARBETSGIVARAVGIFT = parseFloat(document.getElementById('arbetsgivaravgift').value) || 0;
+    const TJÄNSTEPENSION = parseFloat(document.getElementById('tjanstepension').value) || 0;
+    const SEMESTERERSÄTTNING = parseFloat(document.getElementById('semesterersattning').value) || 0;
+    const MOMS = parseFloat(document.getElementById('moms').value) || 0;
+    const SKATT = parseFloat(document.getElementById('skatt').value) || 0;
+    const VINSTSKATT = parseFloat(document.getElementById('vinstskatt').value) || 0;
+
+    // Momsberäkning
+    const fakturabelopp = TIMPRIS * (1 + MOMS);
+    const moms_att_betala = fakturabelopp - TIMPRIS;
+
+    // Intäkter
+    const månadsintäkt = TIMPRIS * DEBITERBARA_TIMMAR;
+
+    // Totalpåslag
+    const total_påslag = ARBETSGIVARAVGIFT + TJÄNSTEPENSION + SEMESTERERSÄTTNING;
+
+    // Löneberäkning där påslagen dras från löneandelen
+    const bruttolön = månadsintäkt * LÖNEANDEL / (1 + total_påslag);
+
+    const nettolon = bruttolön * (1 - SKATT);
+
+    // Specifika påslag i kr
+    const arbetsgivaravgift_kr = bruttolön * ARBETSGIVARAVGIFT;
+    const tjänstepension_kr = bruttolön * TJÄNSTEPENSION;
+    const semesterersättning_kr = bruttolön * SEMESTERERSÄTTNING;
+
+    // Totalkostnad för lön
+    const lönekostnad = bruttolön + tjänstepension_kr + semesterersättning_kr + arbetsgivaravgift_kr;
+
+    // Vinstberäkning
+    const vinst = månadsintäkt - lönekostnad - FASTA_KOSTNADER - ÖVRIGA_KOSTNADER;
+
+    const nettovinst = vinst * (1 - VINSTSKATT);
+
+    // Visa resultat (avrundade uppåt och utan decimaler)
+    const resultsDiv = document.getElementById('results');
+    resultsDiv.innerHTML = `
+      <div><span class="label-result">Timpris exkl. moms:</span> ${ceilNoDecimals(TIMPRIS)} kr</div>
+      <div><span class="label-result">Fakturabelopp inkl. moms:</span> ${ceilNoDecimals(fakturabelopp)} kr</div>
+      <div><span class="label-result">Moms att betala:</span> ${ceilNoDecimals(moms_att_betala)} kr</div>
+
+      <div><span class="label-result">Månadsintäkt:</span> ${ceilNoDecimals(månadsintäkt)} kr</div>
+
+      <div><span class="label-result">Bruttolön:</span> ${ceilNoDecimals(bruttolön)} kr</div>
+      <div><span class="label-result">Nettolön:</span> ${ceilNoDecimals(nettolon)} kr</div>
+
+      <div><span class="label-result">Arbetsgivaravgift:</span> ${ceilNoDecimals(arbetsgivaravgift_kr)} kr</div>
+      <div><span class="label-result">Tjänstepension:</span> ${ceilNoDecimals(tjänstepension_kr)} kr</div>
+      <div><span class="label-result">Semesterersättning:</span> ${ceilNoDecimals(semesterersättning_kr)} kr</div>
+
+      <div><span class="label-result">Totalkostnad för lön (inkl. påslag):</span> ${ceilNoDecimals(lönekostnad)} kr</div>
+
+      <div><span class="label-result">Vinst före skatt:</span> ${ceilNoDecimals(vinst)} kr</div>
+      <div><span class="label-result">Nettovinst efter skatt:</span> ${ceilNoDecimals(nettovinst)} kr</div>
+    `;
+  }
+
+  // Lägg till eventlyssnare på alla inputs
+  document.querySelectorAll('input[type=number]').forEach(input => {
+    input.addEventListener('input', calculate);
+  });
+
+  // Initial beräkning
+  calculate();
+</script>
+</body>
+</html>
